@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MagicCanvas - Old Map Theme</title>
+    <style>
+        body {
+            font-family: 'Trebuchet MS', sans-serif;
+            text-align: center;
+            background: linear-gradient(180deg, #d8e3e7, #f1f6f9);
+            margin: 20px;
+        }
+        canvas {
+            border: 3px solid #6c63ff;
+            display: block;
+            margin: 20px auto;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/d/d4/Old_map.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            touch-action: none; /* Disable touch scrolling */
+        }
+        .toolbar {
+            margin-bottom: 10px;
+        }
+        button, select, input[type="color"], input[type="range"] {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #6c63ff;
+            color: #fff;
+        }
+        button:hover, select:hover {
+            background-color: #5146d8;
+        }
+        #saveBtn {
+            background-color: #ff6f61;
+        }
+        #saveBtn:hover {
+            background-color: #e05750;
+        }
+    </style>
+</head>
+<body>
+    <h1>MagicCanvas</h1>
+    <p>Draw on an enchanted old map!</p>
+    <div class="toolbar">
+        <label for="colorPicker">Color: </label>
+        <input type="color" id="colorPicker" value="#000000">
+        
+        <label for="brushSize">Brush Size: </label>
+        <input type="range" id="brushSize" min="1" max="20" value="3">
+        
+        <button id="eraserBtn">Eraser</button>
+        <button id="clearBtn">Clear Canvas</button>
+    </div>
+    <canvas id="drawingCanvas" width="800" height="600"></canvas>
+    <button id="saveBtn">Save Drawing</button>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let erasing = false;
+
+        const colorPicker = document.getElementById('colorPicker');
+        const brushSize = document.getElementById('brushSize');
+        const eraserBtn = document.getElementById('eraserBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        // Utility to get the correct position for touch/mouse
+        const getPos = (event) => {
+            const rect = canvas.getBoundingClientRect();
+            if (event.touches && event.touches.length > 0) {
+                return {
+                    x: event.touches[0].clientX - rect.left,
+                    y: event.touches[0].clientY - rect.top,
+                };
+            }
+            return {
+                x: event.offsetX,
+                y: event.offsetY,
+            };
+        };
+
+        // Start drawing
+        const startDrawing = (event) => {
+            const { x, y } = getPos(event);
+            drawing = true;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            event.preventDefault(); // Prevent default touch behavior
+        };
+
+        // Draw on the canvas
+        const draw = (event) => {
+            if (!drawing) return;
+            const { x, y } = getPos(event);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = erasing ? '#fff5f7' : colorPicker.value;
+            ctx.lineWidth = brushSize.value;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            event.preventDefault(); // Prevent scrolling
+        };
+
+        // Stop drawing
+        const stopDrawing = () => {
+            drawing = false;
+            ctx.closePath();
+        };
+
+        // Add event listeners for mouse
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+
+        // Add event listeners for touch
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
+
+        // Eraser functionality
+        eraserBtn.addEventListener('click', () => {
+            erasing = !erasing;
+            eraserBtn.textContent = erasing ? 'Drawing Mode' : 'Eraser';
+        });
+
+        // Clear canvas functionality
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Save drawing functionality
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'magic-drawing.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
+</html>
